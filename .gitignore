@@ -1,0 +1,4 @@
+/build/
+/dist/
+/setting/database.xml
+.DS_Store
