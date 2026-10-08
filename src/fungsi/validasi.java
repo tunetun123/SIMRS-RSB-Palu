@@ -6,10 +6,17 @@
 package fungsi;
 
 
+import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dialog.ModalExclusionType;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -51,6 +58,10 @@ import widget.ComboBox;
 import widget.Tanggal;
 import widget.TextArea;
 import java.io.File;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.SwingConstants;
+import javax.swing.Timer;
 import widget.TextBox;
 /**
  *
@@ -80,6 +91,67 @@ public final class validasi {
     public validasi(){
         super();
     };
+    
+    // custom
+    public void styleLabel(final JLabel label,
+            final Color bgColor,
+            final Color textColor,
+            int cornerRadius,
+            int intervalMs,
+            int durasiMs,
+            final Color warnaAkhir) {
+        // cek isi label
+        if (label.getText() == null || label.getText().trim().isEmpty()) {
+            label.setVisible(false); // sembunyikan kalau kosong
+            return;
+        } else {
+            label.setVisible(true); // tampilkan kalau ada isi
+        }
+        // Styling dasar
+        label.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+        label.setToolTipText("Informasi Iterasi Obat");
+        label.setOpaque(false); // disable default opaque
+        label.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
+
+        // Custom paint untuk background rounded
+        label.setUI(new javax.swing.plaf.basic.BasicLabelUI() {
+            @Override
+            public void paint(Graphics g, JComponent c) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                g2.setColor(bgColor); // background kontras
+                g2.fillRoundRect(0, 0, c.getWidth(), c.getHeight(), cornerRadius, cornerRadius);
+
+                super.paint(g, c);
+                g2.dispose();
+            }
+        });
+
+        // Timer kedap-kedip
+        Timer kedipTimer = new Timer(intervalMs, new ActionListener() {
+            boolean toggle = true;
+            int durasi = 0;
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (toggle) {
+                    label.setForeground(textColor); // warna teks kontras
+                } else {
+                    label.setForeground(Color.BLACK); // warna alternatif
+                }
+                toggle = !toggle;
+                durasi += intervalMs;
+
+                if (durasi >= durasiMs) {
+                    ((Timer) e.getSource()).stop();
+                    label.setForeground(warnaAkhir); // warna akhir sesuai parameter
+                }
+            }
+        });
+        kedipTimer.start();
+    }
 
     public void autoNomer(DefaultTableModel tabMode,String strAwal,Integer pnj,javax.swing.JTextField teks){        
         s=Integer.toString(tabMode.getRowCount()+1);
