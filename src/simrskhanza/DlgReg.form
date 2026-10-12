@@ -7998,7 +7998,7 @@
                 <Component class="widget.Button" name="BtnRujol1">
                   <Properties>
                     <Property name="mnemonic" type="int" value="75"/>
-                    <Property name="text" type="java.lang.String" value="Rujuk Online"/>
+                    <Property name="text" type="java.lang.String" value="Rujuk Keluar"/>
                     <Property name="toolTipText" type="java.lang.String" value="Alt+K"/>
                     <Property name="glassColor" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                       <Color blue="99" green="99" red="0" type="rgb"/>
@@ -8246,7 +8246,6 @@
                 </Component>
                 <Component class="widget.TextBox" name="TDokter">
                   <Properties>
-                    <Property name="editable" type="boolean" value="false"/>
                     <Property name="name" type="java.lang.String" value="TDokter" noResource="true"/>
                   </Properties>
                   <Constraints>
@@ -8708,7 +8707,6 @@
                 </Component>
                 <Component class="widget.TextBox" name="TPoli">
                   <Properties>
-                    <Property name="editable" type="boolean" value="false"/>
                     <Property name="name" type="java.lang.String" value="TPoli" noResource="true"/>
                   </Properties>
                   <Constraints>
