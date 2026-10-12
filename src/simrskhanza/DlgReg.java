@@ -15307,16 +15307,20 @@ private void MnLaporanRekapKunjunganBulananPoliActionPerformed(java.awt.event.Ac
             } else {
                 NoSEP.setVisible(false);
             }
-            TTglRujuk.setText(Sequel.cariIsi("SELECT tglrujukan FROM bridging_sep WHERE nomr = ? ORDER BY tglrujukan DESC LIMIT 1", TNoRM.getText()));
+//            TTglRujuk.setText(Sequel.cariIsi("SELECT tglrujukan FROM bridging_sep WHERE nomr = ? ORDER BY tglrujukan DESC LIMIT 1", TNoRM.getText()));
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             // Ambil tanggal rujukan dari database
-            String tanggalRujukan = Sequel.cariIsi("SELECT tglrujukan FROM bridging_sep WHERE catatan <>'SEP Post Ranap' AND catatan <>'SEP Rawat Inap' AND nomr = ? ORDER BY tglrujukan DESC LIMIT 1", TNoRM.getText()).trim();
-            // Cek apakah TTglRujuk kosong
-            if (tanggalRujukan == null || tanggalRujukan.isEmpty()) {
+//            String tanggalRujukan = Sequel.cariIsi("SELECT tglrujukan FROM bridging_sep WHERE catatan <> 'KONTROL POST RANAP' AND catatan <> 'SEP RAWAT INAP' AND nomr = ? ORDER BY tglrujukan DESC LIMIT 1", TNoRM.getText()).trim();
+            String tanggalRujukan = Sequel.cariIsi("SELECT tglrujukan FROM bridging_sep WHERE nomr = ? AND (catatan = '-' OR catatan NOT IN ('KONTROL POST RANAP', 'SEP RAWAT INAP')) AND tglrujukan IS NOT NULL AND tglrujukan <> '' ORDER BY tglsep DESC LIMIT 1", TNoRM.getText());
+            if (tanggalRujukan == null || tanggalRujukan.trim().isEmpty()) {
+                TTglRujuk.setText("");
                 SisaHari.setText("");
                 TRujukBerakhir.setText("");
-                return; // Keluar dari metode jika tidak ada tanggal
+                return;
             }
+
+            tanggalRujukan = tanggalRujukan.trim();
+            TTglRujuk.setText(tanggalRujukan);
 
             try {
                 // Parsing tanggal rujukan
