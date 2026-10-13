@@ -6131,7 +6131,7 @@ public final class BPJSDataSEP extends javax.swing.JDialog {
 
     private void BtnUploadPDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnUploadPDFActionPerformed
         ppUploadPDFBtnPrintActionPerformed(null);
-        //uploadspri();
+        uploadspri();
     }//GEN-LAST:event_BtnUploadPDFActionPerformed
 
     private void BtnUploadPDFKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_BtnUploadPDFKeyPressed
@@ -7409,14 +7409,18 @@ public final class BPJSDataSEP extends javax.swing.JDialog {
     private void CreatePDF(String FileName) {
         if (TabRawat.getSelectedIndex() == 1) {
             if (tbDataSEP.getSelectedRow() != -1) {
-                this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)); 
+                kddokter=Sequel.cariIsi("select reg_periksa.kd_dokter from reg_periksa where reg_periksa.no_rawat=?",TNoRw.getText());
                 Map<String, Object> param = new HashMap<>();
-                param.put("namars", akses.getnamars());
-                param.put("alamatrs", akses.getalamatrs());
-                param.put("kotars", akses.getkabupatenrs());
-                param.put("propinsirs", akses.getpropinsirs());
-                param.put("kontakrs", akses.getkontakrs());
+                param.put("namars",akses.getnamars());
+                param.put("alamatrs",akses.getalamatrs());
+                param.put("kotars",akses.getkabupatenrs());
+                param.put("propinsirs",akses.getpropinsirs());
+                param.put("kontakrs",akses.getkontakrs());
+                param.put("norawat",TNoRw.getText());
                 param.put("prb", Sequel.cariIsi("select bpjs_prb.prb from bpjs_prb where bpjs_prb.no_sep=?", tbDataSEP.getValueAt(tbDataSEP.getSelectedRow(), 0).toString()));
+                param.put("dokter",Sequel.cariIsi("select dokter.nm_dokter from dokter where dokter.kd_dokter=?",kddokter));
+                param.put("noreg",Sequel.cariIsi("select no_reg from reg_periksa where no_rawat=?",TNoRw.getText()));
                 param.put("logo", Sequel.cariGambar("select gambar.bpjs from gambar"));
                 param.put("logors", Sequel.cariGambar("select setting.logo from setting"));
                 param.put("parameter", tbDataSEP.getValueAt(tbDataSEP.getSelectedRow(), 0).toString());
@@ -7508,14 +7512,14 @@ public final class BPJSDataSEP extends javax.swing.JDialog {
                 CreatePDFSPRI(FileName);
                 String filePath = "tmpPDF/" + FileName;
                 UploadPDFSPRI(FileName, "berkasrawat/pages/upload/");
-                HapusPDF();
+//                HapusPDF();
             } // kondisi 2: kolom 43 ada isinya dan kolom 11 = "2. Ralan"
             else if (!kol43.equals("") && kol11.equals("2. Ralan")) {
-                FileName = "SUKON_" + kol43.replaceAll("[/()\\-:., ]", "");
+                FileName = "SURKON_" + kol43.replaceAll("[/()\\-:., ]", "");
                 CreatePDFSukon(FileName);
                 String filePath = "tmpPDF/" + FileName;
                 UploadPDFSukon(FileName, "berkasrawat/pages/upload/");
-                HapusPDF();
+//                HapusPDF();
             } // kondisi 3: kolom 43 ada isi dan kolom 11 = "2. Ralan"
             else if (kol43.equals("") && kol11.equals("2. Ralan")) {
                 //blok kosong
@@ -7626,7 +7630,7 @@ public final class BPJSDataSEP extends javax.swing.JDialog {
 
             // Menyimpan ke database
             boolean uploadSuccess = false;
-            kodeberkas = Sequel.cariIsi("SELECT kode FROM master_berkas_digital WHERE nama LIKE '%SUKON%'");
+            kodeberkas = Sequel.cariIsi("SELECT kode FROM master_berkas_digital WHERE nama LIKE '%SURKON%'");
             if (Sequel.cariInteger("SELECT COUNT(no_rawat) AS jumlah FROM berkas_digital_perawatan WHERE lokasi_file='pages/upload/" + FileName + ".pdf'") > 0) {
                 uploadSuccess = Sequel.mengedittf("berkas_digital_perawatan", "lokasi_file=?", "no_rawat=?,kode=?, lokasi_file=?", 4, new String[]{
                     tbDataSEP.getValueAt(tbDataSEP.getSelectedRow(), 1).toString().trim(), kodeberkas, "pages/upload/" + FileName + ".pdf", "pages/upload/" + FileName + ".pdf"
