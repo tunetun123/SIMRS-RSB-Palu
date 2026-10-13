@@ -71,4 +71,5 @@ nbdist/
 .nb-gradle/
 setting/database.xml
 
+tmpPDF/
 # End of https://www.toptal.com/developers/gitignore/api/macos,java,netbeans

@@ -18,6 +18,8 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.awt.print.PrinterJob;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -58,10 +60,21 @@ import widget.ComboBox;
 import widget.Tanggal;
 import widget.TextArea;
 import java.io.File;
+import java.util.List;
+import javax.imageio.ImageIO;
+import javax.print.PrintService;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.Copies;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
+import net.sf.jasperreports.engine.JRExporterParameter;
+import net.sf.jasperreports.engine.JRPrintPage;
+import net.sf.jasperreports.engine.JasperPrintManager;
+import net.sf.jasperreports.engine.export.JRPrintServiceExporter;
+import net.sf.jasperreports.engine.export.JRPrintServiceExporterParameter;
 import widget.TextBox;
 /**
  *
@@ -1573,5 +1586,336 @@ public final class validasi {
      */
     public static int milliToDay(long milli) {
         return (int) ((double) milli / (1000 * 24 * 60 * 60));
+    }
+    
+    public void MyReportqryiloe(String reportName, String reportDirName, String judul, String qry, Map parameters) {
+        Properties systemProp = System.getProperties();
+        // Ambil current dir
+        String currentDir = systemProp.getProperty("user.dir");
+
+        File dir = new File(currentDir);
+        //System.out.println(currentDir);
+
+        File fileRpt;
+        String fullPath = "";
+        //System.out.println(dir);
+        if (dir.isDirectory()) {
+            String[] isiDir = dir.list();
+            for (String iDir : isiDir) {
+                fileRpt = new File(currentDir + File.separatorChar + iDir + File.separatorChar + reportDirName + File.separatorChar + reportName);
+                //System.out.println(fileRpt);
+                if (fileRpt.isFile()) { // Cek apakah file RptMaster.jrxml ada
+                    System.out.println("mencari report");
+                    fullPath = fileRpt.toString();
+                    System.out.println("Found Report File at : " + fullPath);
+                } // end if
+            } // end for i
+        } // end if
+
+        try {
+            ps = connect.prepareStatement(qry);
+            try {
+                String namafile = "./" + reportDirName + "/" + reportName;
+                rs = ps.executeQuery();
+                JRResultSetDataSource rsdt = new JRResultSetDataSource(rs);
+                JasperPrint jasperPrint = JasperFillManager.fillReport(namafile, parameters, rsdt);
+                JasperViewer jasperViewer = new JasperViewer(jasperPrint, false);
+                jasperViewer.addWindowListener(new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowOpened(java.awt.event.WindowEvent windowEvent) {
+                        // Close the viewer after a delay (adjust the sleep time as needed)
+                        try {
+                            Thread.sleep(3000); // 5000 milliseconds = 5 seconds
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        jasperViewer.setVisible(false); // Hide the viewer
+                        jasperViewer.dispose(); // Dispose of resources
+                    }
+                });
+
+                PrinterJob printerJob = PrinterJob.getPrinterJob();
+                //printerJob.setPrintService(printerJob.getPrintService());
+                PrintRequestAttributeSet printRequestAttributeSet = new HashPrintRequestAttributeSet();
+                printRequestAttributeSet.add(new Copies(1));
+                JRPrintServiceExporter exporter = new JRPrintServiceExporter();
+
+                exporter.setParameter(JRExporterParameter.JASPER_PRINT, jasperPrint);
+                exporter.setParameter(JRPrintServiceExporterParameter.PRINT_REQUEST_ATTRIBUTE_SET, printRequestAttributeSet);
+                exporter.setParameter(JRPrintServiceExporterParameter.PRINT_SERVICE, printerJob.getPrintService());
+                exporter.setParameter(JRPrintServiceExporterParameter.DISPLAY_PRINT_DIALOG, false);
+                exporter.exportReport();
+
+                jasperViewer.setTitle(judul);
+                Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+                jasperViewer.setSize(screen.width - 50, screen.height - 50);
+                jasperViewer.setModalExclusionType(ModalExclusionType.TOOLKIT_EXCLUDE);
+                jasperViewer.setLocationRelativeTo(null);
+                jasperViewer.setVisible(true);
+            } catch (Exception rptexcpt) {
+                System.out.println("Report Can't view because : " + rptexcpt);
+                JOptionPane.showMessageDialog(null, "Report Can't view because : " + rptexcpt);
+            } finally {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+    
+    public void MyReportPDFUpload(String reportName, String reportDirName, String judul, String FileName, Map parameters) {
+        Properties systemProp = System.getProperties();
+
+        // Ambil current dir
+        String currentDir = systemProp.getProperty("user.dir");
+
+        File dir = new File(currentDir);
+
+        File fileRpt;
+        String fullPath = "";
+        if (dir.isDirectory()) {
+            String[] isiDir = dir.list();
+            for (String iDir : isiDir) {
+                fileRpt = new File(currentDir + File.separatorChar + iDir + File.separatorChar + reportDirName + File.separatorChar + reportName);
+                if (fileRpt.isFile()) { // Cek apakah file RptMaster.jasper ada
+                    fullPath = fileRpt.toString();
+                    System.out.println("Found Report File at : " + fullPath);
+                }
+            }
+        }
+
+        try {
+            try (Statement stm = connect.createStatement()) {
+                try {
+                    // Pastikan folder tmpPDF ada
+                    File tmpPDFDir = new File(currentDir + File.separatorChar + "tmpPDF");
+                    if (!tmpPDFDir.exists()) {
+                        tmpPDFDir.mkdir(); // Buat folder tmpPDF jika belum ada
+                    }
+
+                    // Nama file PDF dihasilkan di folder tmpPDF
+                    String outputPdfPath = tmpPDFDir + File.separator + FileName + ".pdf";
+                    String inputJasperPath = "./" + reportDirName + "/" + reportName;
+
+                    JasperPrint jasperPrint = JasperFillManager.fillReport(inputJasperPath, parameters, connect);
+                    JasperExportManager.exportReportToPdfFile(jasperPrint, outputPdfPath);
+
+                    // Buka file PDF yang dihasilkan
+                    File f = new File(outputPdfPath);
+                    //    Desktop.getDesktop().open(f);
+                } catch (Exception rptexcpt) {
+                    System.out.println("Report Can't view because : " + rptexcpt);
+                    JOptionPane.showMessageDialog(null, "Report Can't view because : " + rptexcpt);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    //iloe
+    public void MyReportImageUpload(String reportName, String reportDirName, String judul, String FileName, Map parameters) {
+        Properties systemProp = System.getProperties();
+        String currentDir = systemProp.getProperty("user.dir");
+
+        File dir = new File(currentDir);
+        File fileRpt;
+        String fullPath = "";
+        if (dir.isDirectory()) {
+            String[] isiDir = dir.list();
+            for (String iDir : isiDir) {
+                fileRpt = new File(currentDir + File.separatorChar + iDir + File.separatorChar + reportDirName + File.separatorChar + reportName);
+                if (fileRpt.isFile()) {
+                    fullPath = fileRpt.toString();
+                    System.out.println("Found Report File at : " + fullPath);
+                }
+            }
+        }
+
+        try (Statement stm = connect.createStatement()) {
+            try {
+                // Pastikan folder tmpIMG ada
+                File tmpIMGDir = new File(currentDir + File.separatorChar + "tmpIMG");
+                if (!tmpIMGDir.exists()) {
+                    tmpIMGDir.mkdir(); // Buat folder tmpIMG jika belum ada
+                }
+
+                // Nama file JPEG dihasilkan di folder tmpIMG
+                String outputImgPath = tmpIMGDir + File.separator + FileName + ".jpg";
+                String inputJasperPath = "./" + reportDirName + "/" + reportName;
+
+                // Isi report
+                JasperPrint jasperPrint = JasperFillManager.fillReport(inputJasperPath, parameters, connect);
+
+                // Export halaman pertama ke JPEG (jika report hanya 1 halaman)
+                BufferedImage image = (BufferedImage) JasperPrintManager.printPageToImage(jasperPrint, 0, 2.0f);
+                ImageIO.write(image, "jpg", new File(outputImgPath));
+
+                System.out.println("Saved JPEG: " + outputImgPath);
+
+                // Jika report bisa multi halaman, bisa loop:
+                /*
+            List<JRPrintPage> pages = jasperPrint.getPages();
+            for (int i = 0; i < pages.size(); i++) {
+                BufferedImage img = JasperPrintManager.printPageToImage(jasperPrint, i, 2.0f);
+                String pagePath = tmpIMGDir + File.separator + FileName + "_page" + (i+1) + ".jpg";
+                ImageIO.write(img, "jpg", new File(pagePath));
+                System.out.println("Saved JPEG: " + pagePath);
+            }
+                 */
+            } catch (Exception rptexcpt) {
+                System.out.println("Report Can't view because : " + rptexcpt);
+                JOptionPane.showMessageDialog(null, "Report Can't view because : " + rptexcpt);
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+//akhir iloe
+
+    //TESs ILOE
+    public void MyReportImageUpload(String reportName, String reportDirName, String judul, String qry, String FileName, Map parameters) {
+        Properties systemProp = System.getProperties();
+        String currentDir = systemProp.getProperty("user.dir");
+
+        File dir = new File(currentDir);
+        File fileRpt;
+        String fullPath = "";
+        if (dir.isDirectory()) {
+            String[] isiDir = dir.list();
+            for (String iDir : isiDir) {
+                fileRpt = new File(currentDir + File.separatorChar + iDir + File.separatorChar + reportDirName + File.separatorChar + reportName);
+                if (fileRpt.isFile()) {
+                    fullPath = fileRpt.toString();
+                    System.out.println("Found Report File at : " + fullPath);
+                }
+            }
+        }
+
+        try (Statement stm = connect.createStatement()) {
+            try {
+                // Pastikan folder tmpIMG ada
+                File tmpIMGDir = new File(currentDir + File.separatorChar + "tmpIMG");
+                if (!tmpIMGDir.exists()) {
+                    tmpIMGDir.mkdir();
+                }
+
+                // Path input jasper
+                String inputJasperPath = "./" + reportDirName + "/" + reportName;
+
+                // Eksekusi query untuk data source
+                ResultSet rs = stm.executeQuery(qry);
+                JRResultSetDataSource jrRS = new JRResultSetDataSource(rs);
+
+                // Isi report dengan data source dari query
+                JasperPrint jasperPrint = JasperFillManager.fillReport(inputJasperPath, parameters, jrRS);
+
+                // Export tiap halaman ke JPEG
+                List<JRPrintPage> pages = jasperPrint.getPages();
+                for (int i = 0; i < pages.size(); i++) {
+                    BufferedImage image = (BufferedImage) JasperPrintManager.printPageToImage(jasperPrint, i, 2.0f);
+                    //String outputImgPath = tmpIMGDir + File.separator + FileName + "_page" + (i + 1) + ".jpg";
+                    //ImageIO.write(image, "jpg", new File(outputImgPath));
+                    String outputImgPath = tmpIMGDir + File.separator + FileName + ".jpg";
+                    ImageIO.write(image, "jpg", new File(outputImgPath));
+
+                    System.out.println("Saved JPEG: " + outputImgPath);
+                }
+
+                rs.close();
+
+            } catch (Exception rptexcpt) {
+                System.out.println("Report Can't view because : " + rptexcpt);
+                JOptionPane.showMessageDialog(null, "Report Can't view because : " + rptexcpt);
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+    
+    //AKHIR ILOEE
+    public void MyReportPDFqryUpload(String reportName, String reportDirName, String judul, String qry, String FileName, Map parameters) {
+        Properties systemProp = System.getProperties();
+        // Ambil current dir
+        String currentDir = systemProp.getProperty("user.dir");
+        File dir = new File(currentDir);
+        File fileRpt;
+        String fullPath = "";
+        if (dir.isDirectory()) {
+            String[] isiDir = dir.list();
+            for (String iDir : isiDir) {
+                fileRpt = new File(currentDir + File.separatorChar + iDir + File.separatorChar + reportDirName + File.separatorChar + reportName);
+                if (fileRpt.isFile()) { // Cek apakah file RptMaster.jasper ada
+                    fullPath = fileRpt.toString();
+                    System.out.println("Found Report File at : " + fullPath);
+                }
+            }
+        }
+        try (PreparedStatement ps = connect.prepareStatement(qry)) {
+            try {
+                // Pastikan folder tmpPDF ada
+                File tmpPDFDir = new File(currentDir + File.separatorChar + "tmpPDF");
+                if (!tmpPDFDir.exists()) {
+                    tmpPDFDir.mkdir();
+                }
+                String outputPdfPath = tmpPDFDir + File.separator + FileName + ".pdf";
+                String inputJasperPath = "./" + reportDirName + "/" + reportName;
+                ResultSet rs = ps.executeQuery();
+                JRResultSetDataSource rsdt = new JRResultSetDataSource(rs);
+                JasperPrint jasperPrint = JasperFillManager.fillReport(inputJasperPath, parameters, rsdt);
+                JasperExportManager.exportReportToPdfFile(jasperPrint, outputPdfPath);
+
+            } catch (Exception rptexcpt) {
+                System.out.println("Report Can't view because : " + rptexcpt);
+                JOptionPane.showMessageDialog(null, "Report Can't view because : " + rptexcpt);
+            } finally {
+                ps.close();
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+
+    public void MyReportqryPrintOnly(String reportName, String reportDirName, String judul, String qry, Map parameters) {
+        try (PreparedStatement ps = connect.prepareStatement(qry); ResultSet rs = ps.executeQuery()) {
+            JRResultSetDataSource rsdt = new JRResultSetDataSource(rs);
+
+            File reportFile = new File("./" + reportDirName + "/" + reportName);
+            if (!reportFile.exists()) {
+                JOptionPane.showMessageDialog(null, "File report tidak ditemukan: " + reportFile.getAbsolutePath());
+                return;
+            }
+
+            JasperPrint jasperPrint = JasperFillManager.fillReport(reportFile.getAbsolutePath(), parameters, rsdt);
+
+            PrinterJob printerJob = PrinterJob.getPrinterJob();
+            PrintService[] services = PrinterJob.lookupPrintServices();
+            if (services.length == 0) {
+                JOptionPane.showMessageDialog(null, "Tidak ada printer yang tersedia.");
+                return;
+            }
+
+            PrintService service = services[0];
+            PrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
+            attr.add(new Copies(1));
+
+            JRPrintServiceExporter exporter = new JRPrintServiceExporter();
+            exporter.setParameter(JRExporterParameter.JASPER_PRINT, jasperPrint);
+            exporter.setParameter(JRPrintServiceExporterParameter.PRINT_SERVICE, service);
+            exporter.setParameter(JRPrintServiceExporterParameter.PRINT_REQUEST_ATTRIBUTE_SET, attr);
+            exporter.setParameter(JRPrintServiceExporterParameter.DISPLAY_PRINT_DIALOG, false);
+
+            exporter.exportReport();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Report Can't print because : " + e.getMessage());
+        }
     }
 }
