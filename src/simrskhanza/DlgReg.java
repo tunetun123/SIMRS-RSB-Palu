@@ -14583,7 +14583,7 @@ private void MnLaporanRekapKunjunganBulananPoliActionPerformed(java.awt.event.Ac
             TAlmt.setText(tbPetugas.getValueAt(tbPetugas.getSelectedRow(), 14).toString());
             THbngn.setText(tbPetugas.getValueAt(tbPetugas.getSelectedRow(), 15).toString());
             TBiaya.setText(tbPetugas.getValueAt(tbPetugas.getSelectedRow(), 16).toString());
-            TStatus.setText(tbPetugas.getValueAt(tbPetugas.getSelectedRow(), 19).toString());
+            TStatus.setText(tbPetugas.getValueAt(tbPetugas.getSelectedRow(), 17).toString());
             kdpoli.setText(tbPetugas.getValueAt(tbPetugas.getSelectedRow(), 21).toString());
             kdpnj.setText(tbPetugas.getValueAt(tbPetugas.getSelectedRow(), 22).toString());
             statusfinger();
