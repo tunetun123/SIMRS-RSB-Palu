@@ -12,6 +12,7 @@
 
 package simrskhanza;
 
+import java.net.URLEncoder;
 import bridging.AkunRekeningBankJabar;
 import bridging.AkunRekeningBankJateng;
 import bridging.AkunRekeningBankMandiri;
@@ -49128,5 +49129,41 @@ private void MnGantiPasswordBtnLogActionPerformed(java.awt.event.ActionEvent evt
         btnEEksekutif.setName("btnEEksekutif"); 
         btnEEksekutif.setPreferredSize(new java.awt.Dimension(200, 90));
         btnEEksekutif.addActionListener(this::btnEEksekutifActionPerformed);
+    }
+    
+    public void bukaBerkasDigitalPerawatan(String norawat) {
+        //isTutup();
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        DlgBerkasRawat berkas = new DlgBerkasRawat(this, false);
+        berkas.setJudul("::[ Berkas Digital Perawatan ]::", "berkasrawat/pages");
+        try {
+            String baseUrl;
+            if (akses.gethapus_berkas_digital_perawatan()) {
+                baseUrl = "http://" + koneksiDB.HOSTHYBRIDWEB() + ":"
+                        + prop.getProperty("PORTWEB") + "/" + prop.getProperty("HYBRIDWEB")
+                        + "/berkasrawat/login.php?act=login";
+            } else {
+                baseUrl = "http://" + koneksiDB.HOSTHYBRIDWEB() + ":"
+                        + prop.getProperty("PORTWEB") + "/" + prop.getProperty("HYBRIDWEB")
+                        + "/berkasrawat/cd.php?act=login";
+            }
+
+            // tambahkan parameter usere, passwordte, dan norawat
+            String url = baseUrl
+                    + "&usere=" + koneksiDB.USERHYBRIDWEB()
+                    + "&passwordte=" + koneksiDB.PASHYBRIDWEB()
+                    + "&norawat=" + URLEncoder.encode(norawat, "UTF-8");
+            //System.out.println("DEBUG URL: " + url);
+            berkas.loadURL(url);
+
+        } catch (Exception ex) {
+            System.out.println("Notifikasi : " + ex);
+        }
+
+        berkas.setSize(PanelUtama.getWidth(), PanelUtama.getHeight());
+        berkas.setLocationRelativeTo(PanelUtama);
+        berkas.setVisible(true);
+        DlgHome.dispose();
+        this.setCursor(Cursor.getDefaultCursor());
     }
 }
